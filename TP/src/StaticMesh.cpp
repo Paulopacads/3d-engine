@@ -7,6 +7,27 @@ namespace OM3D {
 StaticMesh::StaticMesh(const MeshData& data) :
     _vertex_buffer(data.vertices),
     _index_buffer(data.indices) {
+    glm::vec3 max(data.vertices.at(0).position);
+    glm::vec3 min(data.vertices.at(0).position);
+
+    for (Vertex v : data.vertices)
+    {
+        if (v.position.x < min.x)
+            min.x = v.position.x;
+        else if (v.position.x > max.x)
+            max.x = v.position.x;
+        if (v.position.y < min.y)
+            min.y = v.position.y;
+        else if (v.position.y > max.y)
+            max.y = v.position.y;
+        if (v.position.z < min.z)
+            min.z = v.position.z;
+        else if (v.position.z > max.z)
+            max.z = v.position.z;
+    }
+    
+    _bounding_center = min + (glm::vec3((max.x - min.x) / 2, (max.y - min.y) / 2, (max.z - min.z) / 2));
+    _bounding_radius = (max - _bounding_center).length();
 }
 
 void StaticMesh::draw() const {
