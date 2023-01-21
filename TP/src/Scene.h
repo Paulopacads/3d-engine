@@ -1,6 +1,8 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include <shader_structs.h>
+
 #include <SceneObject.h>
 #include <PointLight.h>
 #include <Camera.h>
@@ -16,6 +18,9 @@ class Scene : NonMovable {
         Scene();
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name);
+
+        std::shared_ptr<TypedBuffer<shader::FrameData>> frame_data_buffer(const Camera& camera) const;
+        std::shared_ptr<TypedBuffer<shader::PointLight>> point_light_buffer() const;
 
         void render(const Camera& camera) const;
 

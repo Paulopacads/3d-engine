@@ -23,6 +23,14 @@ void SceneObject::set_transform(const glm::mat4& tr) {
     _transform = tr;
 }
 
+std::shared_ptr<Material> SceneObject::material() const {
+    return _material;
+}
+
+const std::shared_ptr<StaticMesh>& SceneObject::mesh() const {
+    return _mesh;
+}
+
 const glm::mat4& SceneObject::transform() const {
     return _transform;
 }

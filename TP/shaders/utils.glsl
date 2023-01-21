@@ -60,3 +60,8 @@ vec3 unpack_normal_map(vec2 normal) {
     return vec3(normal, 1.0 - sqrt(dot(normal, normal)));
 }
 
+vec3 unproject(vec2 uv, float depth, mat4 inverse_viewproj) {
+    vec4 clip = vec4(uv * 2.0 - 1.0, depth, 1.0);
+    vec4 world = inverse_viewproj * clip;
+    return world.xyz / world.w;
+}

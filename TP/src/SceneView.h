@@ -15,6 +15,8 @@ class SceneView {
 
         void render() const;
 
+        const Scene* scene() const { return _scene; }
+
     private:
         const Scene* _scene = nullptr;
         Camera _camera;
