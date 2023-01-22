@@ -213,7 +213,7 @@ int main(int, char**) {
             tonemap_program->bind();
             lit->bind(0);
             tonemap_color->bind_as_image(1, AccessType::WriteOnly);
-            glDispatchCompute(window_size.x / 8, window_size.y / 8, 1);
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8, align_up_to(window_size.y, 8) / 8, 1);
         }
 
         // Blit tonemap result to screen

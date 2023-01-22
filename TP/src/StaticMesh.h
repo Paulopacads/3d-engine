@@ -26,6 +26,8 @@ class StaticMesh : NonCopyable {
         void draw() const;
 
     private:
+        glm::vec3 _bounding_center;
+        float _bounding_radius;
         TypedBuffer<Vertex> _vertex_buffer;
         TypedBuffer<u32> _index_buffer;
 };
