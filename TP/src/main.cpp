@@ -5,12 +5,15 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
+#include <filesystem>
 
 #include <graphics.h>
 #include <SceneView.h>
 #include <Texture.h>
 #include <Framebuffer.h>
 #include <ImGuiRenderer.h>
+#include <Material.h>
 
 #include <imgui/imgui.h>
 
@@ -129,18 +132,52 @@ int main(int, char**) {
     glfwSwapInterval(1); // Enable vsync
     init_graphics();
 
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    std::vector<std::string> files;
+    for(const auto& entry : std::filesystem::directory_iterator(data_path)) {
+        files.push_back(entry.path().string());
+    }
+
     ImGuiRenderer imgui(window);
 
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
+    std::shared_ptr<Texture> tonemap_color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
+    Framebuffer tonemap_framebuffer(nullptr, std::array{tonemap_color.get()});
+
+    std::shared_ptr<Texture> color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
+    std::shared_ptr<Texture> normal = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
+    std::shared_ptr<Texture> depth = std::make_shared<Texture>(window_size, ImageFormat::Depth32_FLOAT);
+    Framebuffer gbuffer(depth.get(), std::array{color.get(), normal.get()});
+
+    std::shared_ptr<Texture> lit = std::make_shared<Texture>(window_size, ImageFormat::RGBA16_FLOAT);
+    Framebuffer main_framebuffer(depth.get(), std::array{lit.get()});
+
     auto tonemap_program = Program::from_file("tonemap.comp");
 
-    Texture depth(window_size, ImageFormat::Depth32_FLOAT);
-    Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
-    Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer main_framebuffer(&depth, std::array{&lit});
-    Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
+    const auto programs = std::array{
+        Program::from_files("lit.frag", "screen.vert"),
+        Program::from_files("lit.frag", "screen.vert", {"DEBUG_COLOR"}),
+        Program::from_files("lit.frag", "screen.vert", {"DEBUG_NORMAL"}),
+        Program::from_files("lit.frag", "screen.vert", {"DEBUG_LIGHT"}),
+        Program::from_files("lit.frag", "screen.vert", {"DEBUG_DEPTH"}),
+    };
+    static bool use_tonemap = true;
+    static bool debug = false;
+    static int debug_mode = 1;
+    Material gbuffer_material = Material();
+    gbuffer_material.set_program(programs[0]);
+
+    gbuffer_material.set_texture(0u, color);
+    gbuffer_material.set_texture(1u, normal);
+    gbuffer_material.set_texture(2u, depth);
+
+    gbuffer_material.set_blend_mode(BlendMode::Alpha);
+    gbuffer_material.set_depth_test_mode(DepthTestMode::Reversed);
+    gbuffer_material.set_depth_write(false);
 
     for(;;) {
         glfwPollEvents();
@@ -154,36 +191,61 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        // Render the scene
+        // Render in gbuffer
         {
-            main_framebuffer.bind();
+            gbuffer.bind();
             scene_view.render();
         }
 
-        // Apply a tonemap in compute shader
+        // Compute lighting gbuffer
+        {
+            auto frame_data_buffer = scene->frame_data_buffer(scene_view.camera());
+            frame_data_buffer->bind(BufferUsage::Uniform, 0);
+            auto point_light_buffer = scene->point_light_buffer();
+            point_light_buffer->bind(BufferUsage::Storage, 1);
+            gbuffer_material.bind();
+            main_framebuffer.bind();
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        
+        // Tonemap
         {
             tonemap_program->bind();
-            lit.bind(0);
-            color.bind_as_image(1, AccessType::WriteOnly);
+            lit->bind(0);
+            tonemap_color->bind_as_image(1, AccessType::WriteOnly);
             glDispatchCompute(align_up_to(window_size.x, 8) / 8, align_up_to(window_size.y, 8) / 8, 1);
         }
+
         // Blit tonemap result to screen
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        tonemap_framebuffer.blit();
+        if (use_tonemap)
+            tonemap_framebuffer.blit();
+        else
+            main_framebuffer.blit();
 
         // GUI
         imgui.start();
         {
-            char buffer[1024] = {};
-            if(ImGui::InputText("Load scene", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                auto result = Scene::from_gltf(buffer);
-                if(!result.is_ok) {
-                    std::cerr << "Unable to load scene (" << buffer << ")" << std::endl;
-                } else {
-                    scene = std::move(result.value);
-                    scene_view = SceneView(scene.get());
+            for (const auto& path : files) {
+                if(ImGui::Button(path.c_str())) {
+                    auto result = Scene::from_gltf(path);
+                    if(!result.is_ok) {
+                        std::cerr << "Unable to load scene (" << path << ")" << std::endl;
+                    } else {
+                        scene = std::move(result.value);
+                        scene_view = SceneView(scene.get());
+                    }
                 }
             }
+            ImGui::Checkbox("Use tonemap", &use_tonemap);
+            ImGui::Checkbox("Debug shader", &debug);
+            if (debug) {
+                ImGui::RadioButton("Color", &debug_mode, 1);
+                ImGui::RadioButton("Normal", &debug_mode, 2);
+                ImGui::RadioButton("Light", &debug_mode, 3);
+                ImGui::RadioButton("Depth", &debug_mode, 4);
+            }
+            gbuffer_material.set_program(programs[debug ? debug_mode : 0]);
         }
         imgui.finish();
 

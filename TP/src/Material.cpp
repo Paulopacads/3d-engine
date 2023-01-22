@@ -21,6 +21,10 @@ void Material::set_depth_test_mode(DepthTestMode depth) {
     _depth_test_mode = depth;
 }
 
+void Material::set_depth_write(bool write) {
+    _depth_write = write;
+}
+
 void Material::set_texture(u32 slot, std::shared_ptr<Texture> tex) {
     if(const auto it = std::find_if(_textures.begin(), _textures.end(), [&](const auto& t) { return t.second == tex; }); it != _textures.end()) {
         it->second = std::move(tex);
@@ -33,11 +37,13 @@ void Material::bind() const {
     switch(_blend_mode) {
         case BlendMode::None:
             glDisable(GL_BLEND);
+            glEnable(GL_CULL_FACE);
         break;
 
         case BlendMode::Alpha:
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDisable(GL_CULL_FACE);
         break;
     }
 
@@ -64,6 +70,8 @@ void Material::bind() const {
         break;
     }
 
+    glDepthMask(_depth_write);
+
     for(const auto& texture : _textures) {
         texture.second->bind(texture.first);
     }
@@ -75,7 +83,7 @@ std::shared_ptr<Material> Material::empty_material() {
     auto material = weak_material.lock();
     if(!material) {
         material = std::make_shared<Material>();
-        material->_program = Program::from_files("lit.frag", "basic.vert");
+        material->_program = Program::from_files("gbuffer.frag", "basic.vert");
         weak_material = material;
     }
     return material;
@@ -83,13 +91,13 @@ std::shared_ptr<Material> Material::empty_material() {
 
 Material Material::textured_material() {
     Material material;
-    material._program = Program::from_files("lit.frag", "basic.vert", {"TEXTURED"});
+    material._program = Program::from_files("gbuffer.frag", "basic.vert", {"TEXTURED"});
     return material;
 }
 
 Material Material::textured_normal_mapped_material() {
     Material material;
-    material._program = Program::from_files("lit.frag", "basic.vert", std::array<std::string, 2>{"TEXTURED", "NORMAL_MAPPED"});
+    material._program = Program::from_files("gbuffer.frag", "basic.vert", std::array<std::string, 2>{"TEXTURED", "NORMAL_MAPPED"});
     return material;
 }
 

@@ -17,6 +17,9 @@ class SceneObject : NonCopyable {
 
         void render() const;
 
+        std::shared_ptr<Material> material() const;
+        const std::shared_ptr<StaticMesh>& mesh() const;
+
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
 

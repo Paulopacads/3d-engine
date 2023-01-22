@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+// #include <iostream>
 
 namespace OM3D {
 
@@ -84,6 +85,7 @@ static std::string read_shader(const std::string& file_name, Span<const std::str
 }
 
 static GLuint create_shader(const std::string& src, GLenum type) {
+    // std::cout << "Compiling shader: " << src << std::endl;
     const GLuint handle = glCreateShader(type);
 
     const int len = int(src.size());
