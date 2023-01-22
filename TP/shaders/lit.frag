@@ -56,7 +56,7 @@ void main() {
 #elif DEBUG_LIGHT
     out_color = vec4(acc, 1.0);
 #elif DEBUG_DEPTH
-    out_color = vec4(vec3(in_depth), 1.0);
+    out_color = vec4(vec3(in_depth * 1e6), 1.0);
 #endif
 }
 

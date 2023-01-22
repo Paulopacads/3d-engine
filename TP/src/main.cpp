@@ -145,9 +145,6 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
-    std::shared_ptr<Texture> tonemap_color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer tonemap_framebuffer(nullptr, std::array{tonemap_color.get()});
-
     std::shared_ptr<Texture> color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     std::shared_ptr<Texture> normal = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     std::shared_ptr<Texture> depth = std::make_shared<Texture>(window_size, ImageFormat::Depth32_FLOAT);
@@ -155,6 +152,9 @@ int main(int, char**) {
 
     std::shared_ptr<Texture> lit = std::make_shared<Texture>(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer main_framebuffer(depth.get(), std::array{lit.get()});
+
+    std::shared_ptr<Texture> tonemap_color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
+    Framebuffer tonemap_framebuffer(nullptr, std::array{tonemap_color.get()});
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 
@@ -176,7 +176,7 @@ int main(int, char**) {
     gbuffer_material.set_texture(2u, depth);
 
     gbuffer_material.set_blend_mode(BlendMode::Alpha);
-    gbuffer_material.set_depth_test_mode(DepthTestMode::Reversed);
+    gbuffer_material.set_depth_test_mode(DepthTestMode::None);
     gbuffer_material.set_depth_write(false);
 
     for(;;) {
