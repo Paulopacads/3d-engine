@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
-// #include <iostream>
+#include <iostream>
 
 namespace OM3D {
 

@@ -156,7 +156,15 @@ int main(int, char**) {
     std::shared_ptr<Texture> lit = std::make_shared<Texture>(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer main_framebuffer(depth.get(), std::array{lit.get()});
 
-    auto tonemap_program = Program::from_file("tonemap.comp");
+    std::shared_ptr<Texture> shadowmap = std::make_shared<Texture>(glm::vec2(2048), ImageFormat::Depth32_FLOAT);
+    shadowmap->parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    shadowmap->parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    shadowmap->parameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    shadowmap->parameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    Framebuffer shadowmap_framebuffer(shadowmap.get());
+
+    const auto tonemap_program = Program::from_file("tonemap.comp");
+    static bool use_tonemap = true;
 
     const auto programs = std::array{
         Program::from_files("lit.frag", "screen.vert"),
@@ -165,19 +173,32 @@ int main(int, char**) {
         Program::from_files("lit.frag", "screen.vert", {"DEBUG_LIGHT"}),
         Program::from_files("lit.frag", "screen.vert", {"DEBUG_DEPTH"}),
     };
-    static bool use_tonemap = true;
+
     static bool debug = false;
     static int debug_mode = 1;
     Material gbuffer_material = Material();
+
     gbuffer_material.set_program(programs[0]);
 
     gbuffer_material.set_texture(0u, color);
     gbuffer_material.set_texture(1u, normal);
     gbuffer_material.set_texture(2u, depth);
+    gbuffer_material.set_texture(3u, shadowmap);
 
     gbuffer_material.set_blend_mode(BlendMode::Alpha);
-    gbuffer_material.set_depth_test_mode(DepthTestMode::Reversed);
+    gbuffer_material.set_depth_test_mode(DepthTestMode::None);
     gbuffer_material.set_depth_write(false);
+
+    const auto shadowmap_program = Program::from_files("shadow.frag", "shadow.vert");
+
+    Material shadowmap_material = Material();
+
+    shadowmap_material.set_program(shadowmap_program);
+
+    shadowmap_material.set_texture(0u, shadowmap);
+    
+    shadowmap_material.set_blend_mode(BlendMode::Alpha);
+    shadowmap_material.set_depth_test_mode(DepthTestMode::Reversed);
 
     for(;;) {
         glfwPollEvents();
@@ -197,10 +218,21 @@ int main(int, char**) {
             scene_view.render();
         }
 
+        {
+            const std::shared_ptr<TypedBuffer<shader::FrameData>> framedata_buffer =
+                scene->frame_data_buffer(scene_view.camera());
+            framedata_buffer->bind(BufferUsage::Uniform, 0);
+        }
+
+        // Render shadowmap
+        {
+            shadowmap_framebuffer.bind();
+            shadowmap_material.bind();
+            scene_view.render_shadowmap();
+        }
+
         // Compute lighting gbuffer
         {
-            auto frame_data_buffer = scene->frame_data_buffer(scene_view.camera());
-            frame_data_buffer->bind(BufferUsage::Uniform, 0);
             auto point_light_buffer = scene->point_light_buffer();
             point_light_buffer->bind(BufferUsage::Storage, 1);
             gbuffer_material.bind();

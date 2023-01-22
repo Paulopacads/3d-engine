@@ -19,4 +19,10 @@ void SceneView::render() const {
     }
 }
 
+void SceneView::render_shadowmap() const {
+    if(_scene) {
+        _scene->render_shadowmap(_camera);
+    }
+}
+
 }

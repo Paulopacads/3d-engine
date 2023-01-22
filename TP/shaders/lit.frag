@@ -11,6 +11,7 @@ layout(location = 0) in vec2 in_uv;
 layout(binding = 0) uniform sampler2D in_color_texture;
 layout(binding = 1) uniform sampler2D in_normal_texture;
 layout(binding = 2) uniform sampler2D in_depth_texture;
+layout(binding = 3) uniform sampler2D in_shadow_texture;
 
 layout(binding = 0) uniform Data {
     FrameData frame;
@@ -30,7 +31,14 @@ void main() {
 
     vec3 in_position = unproject(in_uv, in_depth, inverse(frame.camera.view_proj));
 
-    vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, in_normal)) + ambient;
+    vec3 acc = ambient;
+
+    vec4 sun_pos = frame.sun_view_proj * vec4(in_position, 1.0);
+    vec2 shadow_uv = (sun_pos.xy + 1.0) / 2.0;
+    float shadow_depth = texture(in_shadow_texture, shadow_uv).r;
+    if(shadow_depth <= sun_pos.z) {
+        acc += frame.sun_color * max(0.0, dot(frame.sun_dir, in_normal));
+    }
 
     for(uint i = 0; i != frame.point_light_count; ++i) {
         PointLight light = point_lights[i];
@@ -56,7 +64,7 @@ void main() {
 #elif DEBUG_LIGHT
     out_color = vec4(acc, 1.0);
 #elif DEBUG_DEPTH
-    out_color = vec4(vec3(in_depth), 1.0);
+    out_color = vec4(vec3(in_depth * 1e5), 1.0);
 #endif
 }
 

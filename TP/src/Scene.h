@@ -22,7 +22,10 @@ class Scene : NonMovable {
         std::shared_ptr<TypedBuffer<shader::FrameData>> frame_data_buffer(const Camera& camera) const;
         std::shared_ptr<TypedBuffer<shader::PointLight>> point_light_buffer() const;
 
+        glm::mat4 sun_view_proj(const Camera& camera) const;
+
         void render(const Camera& camera) const;
+        void render_shadowmap(const Camera& camera) const;
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);

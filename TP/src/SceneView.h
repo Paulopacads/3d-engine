@@ -14,6 +14,7 @@ class SceneView {
         const Camera& camera() const;
 
         void render() const;
+        void render_shadowmap() const;
 
         const Scene* scene() const { return _scene; }
 

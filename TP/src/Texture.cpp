@@ -83,4 +83,8 @@ u32 Texture::mip_levels(glm::uvec2 size) {
     return 1 + u32(std::floor(std::log2(side)));
 }
 
+void Texture::parameter(GLenum pname, GLint param) {
+    glTextureParameteri(_handle.get(), pname, param);
+}
+
 }

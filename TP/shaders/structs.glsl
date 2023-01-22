@@ -5,6 +5,8 @@ struct CameraData {
 struct FrameData {
     CameraData camera;
 
+    mat4 sun_view_proj;
+
     vec3 sun_dir;
     uint point_light_count;
 
@@ -19,3 +21,6 @@ struct PointLight {
     float padding_1;
 };
 
+struct Model {
+    mat4 transform;
+};
