@@ -56,7 +56,7 @@ glm::mat4 Scene::sun_view_proj(const Camera& camera) const {
     glm::mat4 reverse = glm::mat4(1.0);
     reverse[2][2] = -1.0f;
     reverse[3][2] = -1.0f;
-    glm::mat4 proj = reverse * glm::orthoZO<float>(-128, 128, -128, 128, -1024, 1024);
+    glm::mat4 proj = reverse * glm::orthoZO<float>(-100, 100, -100, 100, -1000, 1000);
     glm::vec3 up = glm::cross(glm::cross(_sun_direction, glm::vec3(0.0f, 1.0f, 0.0f)), _sun_direction);
     glm::mat4 view = glm::lookAt(camera.position() + _sun_direction, camera.position(), up);
     return proj * view;
