@@ -145,6 +145,9 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
+    std::shared_ptr<Texture> tonemap_color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
+    Framebuffer tonemap_framebuffer(nullptr, std::array{tonemap_color.get()});
+
     std::shared_ptr<Texture> color = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     std::shared_ptr<Texture> normal = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     std::shared_ptr<Texture> depth = std::make_shared<Texture>(window_size, ImageFormat::Depth32_FLOAT);
@@ -153,6 +156,8 @@ int main(int, char**) {
     std::shared_ptr<Texture> lit = std::make_shared<Texture>(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer main_framebuffer(depth.get(), std::array{lit.get()});
 
+    auto tonemap_program = Program::from_file("tonemap.comp");
+
     const auto programs = std::array{
         Program::from_files("lit.frag", "screen.vert"),
         Program::from_files("lit.frag", "screen.vert", {"DEBUG_COLOR"}),
@@ -160,8 +165,9 @@ int main(int, char**) {
         Program::from_files("lit.frag", "screen.vert", {"DEBUG_LIGHT"}),
         Program::from_files("lit.frag", "screen.vert", {"DEBUG_DEPTH"}),
     };
+    static bool use_tonemap = true;
     static bool debug = false;
-    static int debug_mode = 0;
+    static int debug_mode = 1;
     Material gbuffer_material = Material();
     gbuffer_material.set_program(programs[0]);
 
@@ -201,9 +207,21 @@ int main(int, char**) {
             main_framebuffer.bind();
             glDrawArrays(GL_TRIANGLES, 0, 3);
         }
+        
+        // Tonemap
+        {
+            tonemap_program->bind();
+            lit->bind(0);
+            tonemap_color->bind_as_image(1, AccessType::WriteOnly);
+            glDispatchCompute(window_size.x / 8, window_size.y / 8, 1);
+        }
+
         // Blit tonemap result to screen
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        main_framebuffer.blit();
+        if (use_tonemap)
+            tonemap_framebuffer.blit();
+        else
+            main_framebuffer.blit();
 
         // GUI
         imgui.start();
@@ -219,16 +237,15 @@ int main(int, char**) {
                     }
                 }
             }
-            bool debug_updated = ImGui::Checkbox("Shader debugging", &debug);
+            ImGui::Checkbox("Use tonemap", &use_tonemap);
+            ImGui::Checkbox("Debug shader", &debug);
             if (debug) {
-                debug_updated |= ImGui::RadioButton("Color", &debug_mode, 1);
-                debug_updated |= ImGui::RadioButton("Normal", &debug_mode, 2);
-                debug_updated |= ImGui::RadioButton("Light", &debug_mode, 3);
-                debug_updated |= ImGui::RadioButton("Depth", &debug_mode, 4);
-            } else {
-                debug_mode = 0;
+                ImGui::RadioButton("Color", &debug_mode, 1);
+                ImGui::RadioButton("Normal", &debug_mode, 2);
+                ImGui::RadioButton("Light", &debug_mode, 3);
+                ImGui::RadioButton("Depth", &debug_mode, 4);
             }
-            gbuffer_material.set_program(programs[debug_mode]);
+            gbuffer_material.set_program(programs[debug ? debug_mode : 0]);
         }
         imgui.finish();
 
