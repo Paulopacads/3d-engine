@@ -13,5 +13,7 @@ layout(binding = 2) buffer Models {
 };
 
 void main() {
-    gl_Position = frame.sun_view_proj * (models[gl_InstanceID].transform * vec4(in_position, 1.0));
+    gl_Position = frame.sun_view_proj
+        * (models[gl_InstanceID].transform
+            * vec4(in_position, 1.0));
 }

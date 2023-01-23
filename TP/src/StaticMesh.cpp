@@ -30,7 +30,7 @@ StaticMesh::StaticMesh(const MeshData& data) :
     _bounding_radius = (max - _bounding_center).length();
 }
 
-void StaticMesh::draw() const {
+void StaticMesh::setup() const {
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);
 
@@ -51,7 +51,17 @@ void StaticMesh::draw() const {
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
 
+    
+}
+
+void StaticMesh::draw() const {
+    setup();
     glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+}
+
+void StaticMesh::draw_instanced(u32 count) const {
+    setup();
+    glDrawElementsInstanced(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, count);
 }
 
 }

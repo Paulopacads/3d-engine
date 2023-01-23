@@ -82,11 +82,20 @@ void Scene::render(const Camera& camera) const {
     }
 
     for (const auto& [material, objects] : objects_by_material) {
-        for (const SceneObject *obj : objects) {
-            material->set_uniform(HASH("model"), obj->transform());
-            material->bind();
-            obj->mesh()->draw();
+        const std::shared_ptr<TypedBuffer<shader::Model>> transform =
+            std::make_shared<TypedBuffer<shader::Model>>(nullptr, std::max(objects.size(), size_t(1)));
+
+        auto mapping = transform->map(AccessType::WriteOnly);
+        for (size_t i = 0; i != objects.size(); ++i) {
+            mapping[i].transform = objects[i]->transform();
         }
+        
+        transform->bind(BufferUsage::Storage, 2);
+
+        const SceneObject *object = objects[0];
+        material->set_uniform(HASH("material"), object->transform());
+        material->bind();
+        object->mesh()->draw_instanced(objects.size());
     }
 }
 
@@ -112,9 +121,8 @@ void Scene::render_shadowmap(const Camera& camera) const {
         
         transform->bind(BufferUsage::Storage, 2);
 
-        for (const SceneObject *obj : objects) {
-            obj->mesh()->draw();
-        }
+        const SceneObject *object = objects[0];
+        object->mesh()->draw_instanced(objects.size());
     }
 }
 

@@ -84,7 +84,9 @@ u32 Texture::mip_levels(glm::uvec2 size) {
 }
 
 void Texture::parameter(GLenum pname, GLint param) {
+    glBindTexture(GL_TEXTURE_2D, _handle.get());
     glTextureParameteri(_handle.get(), pname, param);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 }
