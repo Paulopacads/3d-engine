@@ -26,8 +26,8 @@ class StaticMesh : NonCopyable {
 
         void draw(unsigned int elts = 1) const;
 
-        bool is_forward(const glm::vec3& normal, const glm::vec3& origin) const;
-        bool frustum_collide(const Frustum& frustum, const glm::vec3& origin) const;
+        bool is_forward(const glm::vec3& normal, const glm::vec3& origin, const glm::vec3& center) const;
+        bool frustum_collide(const Frustum& frustum, const glm::vec3& origin, const glm::mat4& transform) const;
 
     private:
         glm::vec3 _bounding_center;

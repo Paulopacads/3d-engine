@@ -69,7 +69,7 @@ void Scene::render(const Camera& camera) const {
         Frustum frustum = camera.build_frustum();
 
         // compute frustum
-        if (obj.mesh()->frustum_collide(camera.build_frustum(), camera.position()))
+        if (obj.mesh()->frustum_collide(camera.build_frustum(), camera.position(), obj.transform()))
         {
             Material* material_ptr = obj.material().get();
             objects_by_material[material_ptr].push_back(&obj);
