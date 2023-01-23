@@ -20,6 +20,8 @@ class SceneObject : NonCopyable {
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
 
+        bool compare_mat(std::shared_ptr<Material> mat);
+
     private:
         glm::mat4 _transform = glm::mat4(1.0f);
 

@@ -19,7 +19,7 @@ class Scene : NonMovable {
 
         void render(const Camera& camera) const;
 
-        void add_object(SceneObject obj);
+        void add_object(SceneObject obj, int mat);
         void add_object(PointLight obj);
 
     private:
