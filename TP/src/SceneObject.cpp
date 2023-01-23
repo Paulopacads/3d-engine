@@ -9,14 +9,14 @@ SceneObject::SceneObject(std::shared_ptr<StaticMesh> mesh, std::shared_ptr<Mater
     _material(std::move(material)) {
 }
 
-void SceneObject::render() const {
+void SceneObject::render(unsigned int elts) const {
     if(!_material || !_mesh) {
         return;
     }
 
    _material->set_uniform(HASH("model"), transform());
    _material->bind();
-    _mesh->draw();
+    _mesh->draw(elts);
 }
 
 void SceneObject::set_transform(const glm::mat4& tr) {

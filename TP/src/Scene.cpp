@@ -10,6 +10,7 @@ Scene::Scene() {
 }
 
 void Scene::add_object(SceneObject obj) {
+    //trier les objets en 2 vecteurs différents en comparant les matériaux
     _objects.emplace_back(std::move(obj));
 }
 
@@ -45,10 +46,25 @@ void Scene::render(const Camera& camera) const {
     }
     light_buffer.bind(BufferUsage::Storage, 1);
 
-    // Render every object
-    for(const SceneObject& obj : _objects) {
-        obj.render();
+
+    //instanced rendering
+    TypedBuffer<glm::mat4> obj_buffer(nullptr, std::max(_objects.size(), size_t(1)));
+    {
+        auto mapping = obj_buffer.map(AccessType::WriteOnly);
+        for(size_t i = 0; i != _objects.size(); ++i) {
+            const auto& obj = _objects[i];
+            mapping[i] = obj.transform();
+        }
     }
+
+    obj_buffer.bind(BufferUsage::Storage, 2);
+
+    // Render every object
+    //for(const SceneObject& obj : _objects) {
+    //    obj.render();
+    //}
+
+    _objects[0].render(_objects.size());
 }
 
 }

@@ -23,7 +23,9 @@ class StaticMesh : NonCopyable {
 
         StaticMesh(const MeshData& data);
 
-        void draw() const;
+        unsigned int instances;
+
+        void draw(unsigned int elts) const;
 
     private:
         TypedBuffer<Vertex> _vertex_buffer;

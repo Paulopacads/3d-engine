@@ -1,15 +1,17 @@
 #include "StaticMesh.h"
 
 #include <glad/glad.h>
+#include <glm/matrix.hpp>
 
 namespace OM3D {
 
 StaticMesh::StaticMesh(const MeshData& data) :
     _vertex_buffer(data.vertices),
     _index_buffer(data.indices) {
+        instances = 1;
 }
 
-void StaticMesh::draw() const {
+void StaticMesh::draw(unsigned int elts) const {
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);
 
@@ -30,7 +32,8 @@ void StaticMesh::draw() const {
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
 
-    glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+    //glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+    glDrawElementsInstanced(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, elts);
 }
 
 }
