@@ -30,6 +30,19 @@ StaticMesh::StaticMesh(const MeshData& data) :
     _bounding_radius = (max - _bounding_center).length();
 }
 
+bool StaticMesh::is_forward(const glm::vec3& normal, const glm::vec3& origin) const {
+    return glm::dot(normal, _bounding_center - origin) > -_bounding_radius;
+}
+bool StaticMesh::frustum_collide(const Frustum& frustum, const glm::vec3& origin) const {
+
+    return is_forward(frustum._bottom_normal, origin) &&
+            is_forward(frustum._top_normal, origin) &&
+            is_forward(frustum._left_normal, origin) &&
+            is_forward(frustum._right_normal, origin) &&
+            is_forward(frustum._near_normal, origin); //compute znear
+}
+
+
 void StaticMesh::draw(unsigned int elts) const {
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);

@@ -82,7 +82,7 @@ Frustum Camera::build_frustum() const {
     const glm::vec3 camera_forward = forward();
     const glm::vec3 camera_up = up();
     const glm::vec3 camera_right = right();
-    
+
     Frustum frustum;
     frustum._near_normal = camera_forward;
 

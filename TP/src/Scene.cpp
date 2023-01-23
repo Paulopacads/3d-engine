@@ -64,10 +64,16 @@ void Scene::render(const Camera& camera) const {
         std::unordered_map<Material*, std::vector<const SceneObject*>>();
 
     for (const SceneObject &obj : _objects) {
-        // FRUSTUM CULLING ?
 
-        Material* material_ptr = obj.material().get();
-        objects_by_material[material_ptr].push_back(&obj);
+        // FRUSTUM CULLING
+        Frustum frustum = camera.build_frustum();
+
+        // compute frustum
+        if (obj.mesh()->frustum_collide(camera.build_frustum(), camera.position()))
+        {
+            Material* material_ptr = obj.material().get();
+            objects_by_material[material_ptr].push_back(&obj);
+        }
     }
 
     for (const auto& [material, objects] : objects_by_material) {
