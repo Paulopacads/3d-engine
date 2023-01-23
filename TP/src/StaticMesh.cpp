@@ -25,12 +25,12 @@ StaticMesh::StaticMesh(const MeshData& data) :
         else if (v.position.z > max.z)
             max.z = v.position.z;
     }
-    
+
     _bounding_center = min + (glm::vec3((max.x - min.x) / 2, (max.y - min.y) / 2, (max.z - min.z) / 2));
     _bounding_radius = (max - _bounding_center).length();
 }
 
-void StaticMesh::draw() const {
+void StaticMesh::draw(unsigned int elts) const {
     _vertex_buffer.bind(BufferUsage::Attribute);
     _index_buffer.bind(BufferUsage::Index);
 
@@ -51,7 +51,9 @@ void StaticMesh::draw() const {
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
 
-    glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+    //glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+
+    glDrawElementsInstanced(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, elts);
 }
 
 }

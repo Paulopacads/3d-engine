@@ -23,7 +23,7 @@ class StaticMesh : NonCopyable {
 
         StaticMesh(const MeshData& data);
 
-        void draw() const;
+        void draw(unsigned int elts = 1) const;
 
     private:
         glm::vec3 _bounding_center;
